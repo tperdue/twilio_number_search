@@ -138,6 +138,25 @@ The FastAPI application provides interactive API documentation:
 - `GET /api/v1/regulations/{country_code}` - Get regulations for a country
 - `POST /api/v1/sync` - Trigger data synchronization from Twilio
 
+## Documentation
+
+Comprehensive documentation is available in the `docs/` folder:
+
+### User Guides
+
+- **[Excel Export Guide](docs/EXCEL_EXPORT_GUIDE.md)** - Learn how to export regulations as Excel templates for compliance checklists
+- **[Regulatory Compliance Guide](docs/REGULATORY_COMPLIANCE_GUIDE.md)** - Understand regulations, query them, and use them for compliance workflows
+- **[Sync Workflow](docs/SYNC_WORKFLOW.md)** - Guide to data synchronization operations, monitoring sync jobs, and troubleshooting
+
+### Developer Guides
+
+- **[API Usage Guide](docs/API_USAGE_GUIDE.md)** - Practical API examples, common use cases, error handling, and integration patterns
+- **[Deployment Guide](docs/DEPLOYMENT_GUIDE.md)** - Production deployment, security, scaling, monitoring, and cloud platform considerations
+
+### Reference
+
+- **[Database Schema](docs/DATABASE_SCHEMA.md)** - Complete database structure, table schemas, relationships, JSON structures, and example queries
+
 ## Project Structure
 
 ```
