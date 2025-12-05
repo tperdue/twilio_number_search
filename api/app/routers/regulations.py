@@ -1,17 +1,24 @@
 """Endpoints for querying regulatory compliance regulations."""
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, or_
 from typing import List, Optional
+from pydantic import BaseModel
 
 from app.database import get_db_session
 from app.models import Regulation, CountryNumberTypes
 from app.schemas import RegulationResponse
+from app.services.excel_export import generate_regulation_excel
 import logging
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/regulations", tags=["regulations"])
+
+
+class ExportRegulationsRequest(BaseModel):
+    """Request schema for exporting multiple regulations."""
+    regulation_sids: List[str] = []
 
 
 @router.get("/{country_code}", response_model=List[RegulationResponse])
@@ -106,4 +113,128 @@ async def get_regulations(
         )
     
     return [RegulationResponse.model_validate(regulation) for regulation in regulations]
+
+
+@router.get("/{regulation_sid}/export")
+async def export_regulation(
+    regulation_sid: str,
+    db: AsyncSession = Depends(get_db_session)
+):
+    """
+    Export a single regulation as an Excel template/checklist.
+    
+    Args:
+        regulation_sid: The SID of the regulation to export
+        db: Database session
+        
+    Returns:
+        Excel file download
+    """
+    # Query the regulation
+    query = select(Regulation).where(Regulation.sid == regulation_sid)
+    result = await db.execute(query)
+    regulation = result.scalar_one_or_none()
+    
+    if not regulation:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Regulation {regulation_sid} not found"
+        )
+    
+    # Convert to dict for Excel export
+    regulation_dict = {
+        'sid': regulation.sid,
+        'friendly_name': regulation.friendly_name,
+        'iso_country': regulation.iso_country,
+        'number_type': regulation.number_type,
+        'end_user_type': regulation.end_user_type,
+        'requirements': regulation.requirements,
+        'last_updated': regulation.last_updated,
+    }
+    
+    # Generate Excel file
+    excel_file = generate_regulation_excel([regulation_dict])
+    
+    # Generate filename
+    filename = f"regulation_{regulation_sid[:8]}.xlsx"
+    if regulation.friendly_name:
+        # Sanitize filename
+        safe_name = "".join(c for c in regulation.friendly_name[:30] if c.isalnum() or c in (' ', '-', '_')).strip()
+        filename = f"{safe_name}_{regulation_sid[:8]}.xlsx"
+    
+    # Return file as response
+    return Response(
+        content=excel_file.read(),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"'
+        }
+    )
+
+
+@router.post("/export")
+async def export_regulations(
+    request: ExportRegulationsRequest,
+    db: AsyncSession = Depends(get_db_session)
+):
+    """
+    Export multiple regulations as a multi-tab Excel file.
+    
+    Args:
+        request: Request body containing list of regulation SIDs
+        db: Database session
+        
+    Returns:
+        Excel file download with one tab per regulation
+    """
+    if not request.regulation_sids:
+        raise HTTPException(
+            status_code=400,
+            detail="At least one regulation SID is required"
+        )
+    
+    # Query all regulations
+    query = select(Regulation).where(Regulation.sid.in_(request.regulation_sids))
+    result = await db.execute(query)
+    regulations = result.scalars().all()
+    
+    if not regulations:
+        raise HTTPException(
+            status_code=404,
+            detail="No regulations found for the provided SIDs"
+        )
+    
+    # Check if all requested regulations were found
+    found_sids = {reg.sid for reg in regulations}
+    missing_sids = set(request.regulation_sids) - found_sids
+    if missing_sids:
+        logger.warning(f"Some regulation SIDs not found: {missing_sids}")
+    
+    # Convert to dicts for Excel export
+    regulation_dicts = []
+    for regulation in regulations:
+        regulation_dicts.append({
+            'sid': regulation.sid,
+            'friendly_name': regulation.friendly_name,
+            'iso_country': regulation.iso_country,
+            'number_type': regulation.number_type,
+            'end_user_type': regulation.end_user_type,
+            'requirements': regulation.requirements,
+            'last_updated': regulation.last_updated,
+        })
+    
+    # Generate Excel file
+    excel_file = generate_regulation_excel(regulation_dicts)
+    
+    # Generate filename
+    filename = f"regulations_export_{len(regulation_dicts)}_regulations.xlsx"
+    
+    # Return file as response
+    return Response(
+        content=excel_file.read(),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"'
+        }
+    )
 

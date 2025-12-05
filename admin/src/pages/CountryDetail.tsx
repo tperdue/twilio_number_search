@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { NumberTypeBadge } from '@/components/NumberTypeBadge';
 import { RegulationCard } from '@/components/RegulationCard';
 import { useCountry, useRegulations } from '@/hooks/useApi';
+import { useSelectedRegulations } from '@/contexts/SelectedRegulationsContext';
 import { format } from 'date-fns';
 
 const NUMBER_TYPES = [
@@ -32,6 +33,8 @@ export default function CountryDetail() {
     countryCode || '', 
     numberTypeFilter !== 'all' ? numberTypeFilter : undefined
   );
+
+  const { isSelected, addRegulation, removeRegulation } = useSelectedRegulations();
 
   if (isLoading) {
     return (
@@ -158,7 +161,11 @@ export default function CountryDetail() {
           ) : regulations && regulations.length > 0 ? (
             <div className="space-y-4">
               {regulations.map((regulation) => (
-                <RegulationCard key={regulation.sid} regulation={regulation} />
+                <RegulationCard 
+                  key={regulation.sid} 
+                  regulation={regulation}
+                  countryCode={countryCode || ''}
+                />
               ))}
             </div>
           ) : (
