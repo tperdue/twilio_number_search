@@ -76,8 +76,15 @@ VITE_API_BASE_URL=http://localhost:8000
 Start all services using Docker Compose:
 
 ```bash
-docker-compose up -d
+docker-compose up --build -d
 ```
+
+**Note**: The `--build` flag is required to build the Docker images for the API and Admin services. Use `--build`:
+- On first-time setup (required)
+- After pulling code changes that modify dependencies or Dockerfiles
+- When you want to ensure you're using the latest built images
+
+For subsequent runs where no code has changed, you can use `docker-compose up -d` to start existing containers, but using `--build` is safe and ensures you're always up-to-date.
 
 This will start:
 - PostgreSQL database (port 5432)
