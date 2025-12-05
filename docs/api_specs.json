@@ -1,0 +1,1092 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "Twilio Number Search API",
+        "description": "Simplified API for searching Twilio phone numbers and querying regulatory compliance",
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/api/v1/sync": {
+            "post": {
+                "tags": [
+                    "sync"
+                ],
+                "summary": "Trigger Sync",
+                "description": "Trigger a sync of Twilio number types.\n\nNote: Twilio credentials are loaded from environment variables.\nRequest body can be empty.\n\nReturns:\n    Job ID for tracking sync status",
+                "operationId": "trigger_sync_api_v1_sync_post",
+                "responses": {
+                    "202": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {
+                                        "type": "string"
+                                    },
+                                    "title": "Response Trigger Sync Api V1 Sync Post"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "get": {
+                "tags": [
+                    "sync"
+                ],
+                "summary": "List Sync Jobs",
+                "description": "List recent sync jobs.\n\nArgs:\n    limit: Maximum number of jobs to return\n    \nReturns:\n    List of sync job statuses",
+                "operationId": "list_sync_jobs_api_v1_sync_get",
+                "parameters": [
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 10,
+                            "title": "Limit"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {
+                                        "type": "array",
+                                        "items": {}
+                                    },
+                                    "title": "Response List Sync Jobs Api V1 Sync Get"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/sync/{job_id}": {
+            "get": {
+                "tags": [
+                    "sync"
+                ],
+                "summary": "Get Sync Status",
+                "description": "Get status of a sync job.\n\nArgs:\n    job_id: Job ID returned from trigger_sync\n    \nReturns:\n    Sync job status",
+                "operationId": "get_sync_status_api_v1_sync__job_id__get",
+                "parameters": [
+                    {
+                        "name": "job_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Job Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SyncStatus"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/sync/regulations": {
+            "post": {
+                "tags": [
+                    "sync"
+                ],
+                "summary": "Trigger Regulations Sync",
+                "description": "Trigger a sync of Twilio regulatory compliance regulations.\n\nNote: Twilio credentials are loaded from environment variables.\nRequest body can be empty.\n\nReturns:\n    Job ID for tracking sync status",
+                "operationId": "trigger_regulations_sync_api_v1_sync_regulations_post",
+                "responses": {
+                    "202": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "additionalProperties": {
+                                        "type": "string"
+                                    },
+                                    "type": "object",
+                                    "title": "Response Trigger Regulations Sync Api V1 Sync Regulations Post"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/countries": {
+            "get": {
+                "tags": [
+                    "countries"
+                ],
+                "summary": "List Countries",
+                "description": "List all countries with available number types.\n\nArgs:\n    skip: Pagination offset\n    limit: Maximum number of results\n    number_type: Optional filter by number type availability\n    db: Database session\n    \nReturns:\n    List of country number types",
+                "operationId": "list_countries_api_v1_countries_get",
+                "parameters": [
+                    {
+                        "name": "skip",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "description": "Number of records to skip",
+                            "default": 0,
+                            "title": "Skip"
+                        },
+                        "description": "Number of records to skip"
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 1000,
+                            "minimum": 1,
+                            "description": "Maximum number of records to return",
+                            "default": 100,
+                            "title": "Limit"
+                        },
+                        "description": "Maximum number of records to return"
+                    },
+                    {
+                        "name": "number_type",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Filter by number type (local, toll_free, mobile, etc.)",
+                            "title": "Number Type"
+                        },
+                        "description": "Filter by number type (local, toll_free, mobile, etc.)"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/CountryNumberTypesResponse"
+                                    },
+                                    "title": "Response List Countries Api V1 Countries Get"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/countries/{country_code}": {
+            "get": {
+                "tags": [
+                    "countries"
+                ],
+                "summary": "Get Country",
+                "description": "Get number types for a specific country.\n\nArgs:\n    country_code: ISO country code (e.g., \"US\")\n    db: Database session\n    \nReturns:\n    Country number types",
+                "operationId": "get_country_api_v1_countries__country_code__get",
+                "parameters": [
+                    {
+                        "name": "country_code",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Country Code"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CountryNumberTypesResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/regulations/{country_code}": {
+            "get": {
+                "tags": [
+                    "regulations"
+                ],
+                "summary": "Get Regulations",
+                "description": "Get regulatory requirements for a specific country.\nAlways returns regulations with end_user_type='business'.\nQueries database only - data must be synced first using POST /api/v1/sync/regulations.\n\nBy default, returns all regulations regardless of number type availability, as some\nnumber types are available through private offerings and not exposed in the public API.\n\nArgs:\n    country_code: ISO country code (e.g., \"US\")\n    number_type: Optional filter by number type\n    only_available_types: Only show regulations for phone types available in the country (default: False)\n    db: Database session\n    \nReturns:\n    List of regulations for the specified country\n    \nRaises:\n    404: If no regulations found for the country",
+                "operationId": "get_regulations_api_v1_regulations__country_code__get",
+                "parameters": [
+                    {
+                        "name": "country_code",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Country Code"
+                        }
+                    },
+                    {
+                        "name": "number_type",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Filter by number type (local, toll_free, mobile, etc.)",
+                            "title": "Number Type"
+                        },
+                        "description": "Filter by number type (local, toll_free, mobile, etc.)"
+                    },
+                    {
+                        "name": "only_available_types",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean",
+                            "description": "Only show regulations for available phone types (default: False to show all regulations including private offerings)",
+                            "default": false,
+                            "title": "Only Available Types"
+                        },
+                        "description": "Only show regulations for available phone types (default: False to show all regulations including private offerings)"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/RegulationResponse"
+                                    },
+                                    "title": "Response Get Regulations Api V1 Regulations  Country Code  Get"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/regulations/{regulation_sid}/export": {
+            "get": {
+                "tags": [
+                    "regulations"
+                ],
+                "summary": "Export Regulation",
+                "description": "Export a single regulation as an Excel template/checklist.\n\nArgs:\n    regulation_sid: The SID of the regulation to export\n    db: Database session\n    \nReturns:\n    Excel file download",
+                "operationId": "export_regulation_api_v1_regulations__regulation_sid__export_get",
+                "parameters": [
+                    {
+                        "name": "regulation_sid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Regulation Sid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/regulations/export": {
+            "post": {
+                "tags": [
+                    "regulations"
+                ],
+                "summary": "Export Regulations",
+                "description": "Export multiple regulations as a multi-tab Excel file.\n\nArgs:\n    request: Request body containing list of regulation SIDs\n    db: Database session\n    \nReturns:\n    Excel file download with one tab per regulation",
+                "operationId": "export_regulations_api_v1_regulations_export_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ExportRegulationsRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/numbers/search": {
+            "post": {
+                "tags": [
+                    "numbers"
+                ],
+                "summary": "Search Numbers",
+                "description": "Search for available phone numbers by country and number type.\n\nNote: When both sms_enabled and voice_enabled are specified, filters are applied with AND logic\n(numbers must match both criteria). If no results are returned, try searching with only one filter\nor without filters to see available numbers.\n\nNote: Twilio credentials are loaded from environment variables.\n\nArgs:\n    request: Search request containing country_code, number_type, and optional filters\n    \nReturns:\n    List of available phone numbers matching the criteria\n    \nRaises:\n    400: If invalid number type or request parameters\n    500: If Twilio API error occurs or credentials are not configured",
+                "operationId": "search_numbers_api_v1_numbers_search_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/NumberSearchRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "items": {
+                                        "$ref": "#/components/schemas/AvailableNumberResponse"
+                                    },
+                                    "type": "array",
+                                    "title": "Response Search Numbers Api V1 Numbers Search Post"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/": {
+            "get": {
+                "summary": "Root",
+                "description": "Root endpoint.",
+                "operationId": "root__get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/health": {
+            "get": {
+                "summary": "Health Check",
+                "description": "Health check endpoint.",
+                "operationId": "health_check_health_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "AvailableNumberResponse": {
+                "properties": {
+                    "phone_number": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Phone Number",
+                        "description": "Phone number in E.164 format"
+                    },
+                    "friendly_name": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Friendly Name",
+                        "description": "Formatted version of the phone number"
+                    },
+                    "capabilities": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/PhoneNumberCapabilities"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "description": "Phone number capabilities"
+                    },
+                    "iso_country": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Iso Country",
+                        "description": "ISO country code"
+                    },
+                    "address_requirements": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Address Requirements",
+                        "description": "Address requirement type: none, any, local, or foreign"
+                    },
+                    "beta": {
+                        "anyOf": [
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Beta",
+                        "description": "Whether the phone number is new to Twilio platform"
+                    },
+                    "lata": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Lata",
+                        "description": "LATA (Local Access and Transport Area) - US/Canada only"
+                    },
+                    "locality": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Locality",
+                        "description": "Locality or city of the phone number's location"
+                    },
+                    "rate_center": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Rate Center",
+                        "description": "Rate center - US/Canada only"
+                    },
+                    "latitude": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Latitude",
+                        "description": "Latitude of phone number's location - US/Canada only"
+                    },
+                    "longitude": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Longitude",
+                        "description": "Longitude of phone number's location - US/Canada only"
+                    },
+                    "region": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Region",
+                        "description": "State or province abbreviation - US/Canada only"
+                    },
+                    "postal_code": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Postal Code",
+                        "description": "Postal or ZIP code - US/Canada only"
+                    }
+                },
+                "type": "object",
+                "title": "AvailableNumberResponse",
+                "description": "Response schema for available phone numbers."
+            },
+            "CountryNumberTypesResponse": {
+                "properties": {
+                    "country_code": {
+                        "type": "string",
+                        "maxLength": 2,
+                        "minLength": 2,
+                        "title": "Country Code",
+                        "description": "ISO country code"
+                    },
+                    "country": {
+                        "type": "string",
+                        "title": "Country",
+                        "description": "Country name"
+                    },
+                    "beta": {
+                        "type": "boolean",
+                        "title": "Beta",
+                        "description": "Whether country is in beta",
+                        "default": false
+                    },
+                    "local": {
+                        "type": "boolean",
+                        "title": "Local",
+                        "description": "Local numbers available",
+                        "default": false
+                    },
+                    "toll_free": {
+                        "type": "boolean",
+                        "title": "Toll Free",
+                        "description": "Toll-free numbers available",
+                        "default": false
+                    },
+                    "mobile": {
+                        "type": "boolean",
+                        "title": "Mobile",
+                        "description": "Mobile numbers available",
+                        "default": false
+                    },
+                    "national": {
+                        "type": "boolean",
+                        "title": "National",
+                        "description": "National numbers available",
+                        "default": false
+                    },
+                    "voip": {
+                        "type": "boolean",
+                        "title": "Voip",
+                        "description": "VoIP numbers available",
+                        "default": false
+                    },
+                    "shared_cost": {
+                        "type": "boolean",
+                        "title": "Shared Cost",
+                        "description": "Shared cost numbers available",
+                        "default": false
+                    },
+                    "machine_to_machine": {
+                        "type": "boolean",
+                        "title": "Machine To Machine",
+                        "description": "Machine-to-machine numbers available",
+                        "default": false
+                    },
+                    "last_updated": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Last Updated"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "country_code",
+                    "country",
+                    "last_updated"
+                ],
+                "title": "CountryNumberTypesResponse",
+                "description": "Response schema for country number types."
+            },
+            "ExportRegulationsRequest": {
+                "properties": {
+                    "regulation_sids": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "title": "Regulation Sids",
+                        "default": []
+                    }
+                },
+                "type": "object",
+                "title": "ExportRegulationsRequest",
+                "description": "Request schema for exporting multiple regulations."
+            },
+            "HTTPValidationError": {
+                "properties": {
+                    "detail": {
+                        "items": {
+                            "$ref": "#/components/schemas/ValidationError"
+                        },
+                        "type": "array",
+                        "title": "Detail"
+                    }
+                },
+                "type": "object",
+                "title": "HTTPValidationError"
+            },
+            "NumberSearchRequest": {
+                "properties": {
+                    "country_code": {
+                        "type": "string",
+                        "maxLength": 2,
+                        "minLength": 2,
+                        "title": "Country Code",
+                        "description": "ISO country code (e.g., 'US')"
+                    },
+                    "number_type": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/NumberType"
+                            }
+                        ],
+                        "description": "Number type: mobile, local, or toll-free"
+                    },
+                    "sms_enabled": {
+                        "anyOf": [
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Sms Enabled",
+                        "description": "Filter by SMS capability (True/False)"
+                    },
+                    "voice_enabled": {
+                        "anyOf": [
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Voice Enabled",
+                        "description": "Filter by Voice capability (True/False)"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "country_code",
+                    "number_type"
+                ],
+                "title": "NumberSearchRequest",
+                "description": "Request schema for searching available phone numbers.\n\nNote: Twilio credentials are now loaded from environment variables."
+            },
+            "NumberType": {
+                "type": "string",
+                "enum": [
+                    "mobile",
+                    "local",
+                    "toll-free"
+                ],
+                "title": "NumberType",
+                "description": "Enum for number types."
+            },
+            "PhoneNumberCapabilities": {
+                "properties": {
+                    "mms": {
+                        "anyOf": [
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Mms"
+                    },
+                    "sms": {
+                        "anyOf": [
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Sms"
+                    },
+                    "voice": {
+                        "anyOf": [
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Voice"
+                    },
+                    "fax": {
+                        "anyOf": [
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Fax"
+                    }
+                },
+                "type": "object",
+                "title": "PhoneNumberCapabilities",
+                "description": "Schema for phone number capabilities."
+            },
+            "RegulationResponse": {
+                "properties": {
+                    "sid": {
+                        "type": "string",
+                        "maxLength": 34,
+                        "minLength": 34,
+                        "title": "Sid",
+                        "description": "Unique regulation identifier"
+                    },
+                    "friendly_name": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Friendly Name",
+                        "description": "Human-readable description of the regulation"
+                    },
+                    "iso_country": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 2,
+                                "minLength": 2
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Iso Country",
+                        "description": "ISO country code"
+                    },
+                    "number_type": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Number Type",
+                        "description": "Type of phone number restricted by the regulation"
+                    },
+                    "end_user_type": {
+                        "type": "string",
+                        "title": "End User Type",
+                        "description": "Type of end user (always 'business')",
+                        "default": "business"
+                    },
+                    "requirements": {
+                        "anyOf": [
+                            {
+                                "type": "object"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Requirements",
+                        "description": "Regulatory requirements including end_user and supporting_document information"
+                    },
+                    "url": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Url",
+                        "description": "Absolute URL of the Regulation resource"
+                    },
+                    "last_updated": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Last Updated"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "sid"
+                ],
+                "title": "RegulationResponse",
+                "description": "Response schema for regulatory compliance regulations."
+            },
+            "SyncStatus": {
+                "properties": {
+                    "job_id": {
+                        "type": "string",
+                        "title": "Job Id"
+                    },
+                    "status": {
+                        "type": "string",
+                        "title": "Status",
+                        "description": "Status: pending, in_progress, completed, failed"
+                    },
+                    "started_at": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Started At"
+                    },
+                    "completed_at": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Completed At"
+                    },
+                    "countries_processed": {
+                        "type": "integer",
+                        "title": "Countries Processed",
+                        "default": 0
+                    },
+                    "countries_total": {
+                        "anyOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Countries Total"
+                    },
+                    "error": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Error"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "job_id",
+                    "status"
+                ],
+                "title": "SyncStatus",
+                "description": "Schema for sync job status."
+            },
+            "ValidationError": {
+                "properties": {
+                    "loc": {
+                        "items": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "integer"
+                                }
+                            ]
+                        },
+                        "type": "array",
+                        "title": "Location"
+                    },
+                    "msg": {
+                        "type": "string",
+                        "title": "Message"
+                    },
+                    "type": {
+                        "type": "string",
+                        "title": "Error Type"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "loc",
+                    "msg",
+                    "type"
+                ],
+                "title": "ValidationError"
+            }
+        }
+    }
+}
