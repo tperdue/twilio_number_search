@@ -1,0 +1,81 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:alpine
+    container_name: twilio-number-search-db
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-twilio_number_search}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - twilio-network
+
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: twilio-number-search-api
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://postgres:postgres@db:5432/twilio_number_search}
+      DEBUG: ${DEBUG:-false}
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
+    ports:
+      - "${API_PORT:-8000}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./api/app:/app/app  # For development - mount source code
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    networks:
+      - twilio-network
+
+  admin:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile
+    container_name: twilio-number-search-admin
+    env_file:
+      - .env
+    environment:
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8000}
+    ports:
+      - "${ADMIN_PORT:-8080}:8080"
+    depends_on:
+      - api
+    volumes:
+      - ./admin/src:/app/src  # For development - mount source code
+      - ./admin/public:/app/public
+      - ./admin/index.html:/app/index.html
+      - ./admin/vite.config.ts:/app/vite.config.ts
+      - ./admin/tsconfig.json:/app/tsconfig.json
+      - ./admin/tsconfig.app.json:/app/tsconfig.app.json
+      - ./admin/tsconfig.node.json:/app/tsconfig.node.json
+      - ./admin/tailwind.config.ts:/app/tailwind.config.ts
+      - ./admin/postcss.config.js:/app/postcss.config.js
+      - ./admin/components.json:/app/components.json
+    networks:
+      - twilio-network
+
+volumes:
+  pg-data:
+
+networks:
+  twilio-network:
+    driver: bridge
+
